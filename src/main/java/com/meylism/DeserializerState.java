@@ -36,15 +36,10 @@ import org.apache.hadoop.io.Text;
 import org.openjdk.jmh.annotations.*;
 
 
-import java.io.*;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 @State(Scope.Benchmark)
-public class SerDeState {
-    @Param({"mesh.json"})
-    private String resourceName;
-
+public class DeserializerState extends StateBase {
     public Text jsonText;
 
     public Properties props;
@@ -55,21 +50,18 @@ public class SerDeState {
         switch (resourceName) {
             case "mesh.json":
                 props = new Properties();
-                props.setProperty(serdeConstants.LIST_COLUMNS, "batches,colors,indices,influences,morphtargets," +
-                        "normals,positions,tex0");
-                props.setProperty(serdeConstants.LIST_COLUMN_TYPES,
-                        "array<struct<indexrange:array<int>,usedbones:array<int>,vertexrange:array<int>>>," +
-                        "array<int>," + "array<int>," + "array<array<double>>," + "struct<notKnown:int>,array<double>," +
-                                "array<double>," + "array<double>".toLowerCase());
+                props.setProperty(serdeConstants.LIST_COLUMNS, BenchmarkConstants.MESH_COLUMN_NAME);
+                props.setProperty(serdeConstants.LIST_COLUMN_TYPES, BenchmarkConstants.MESH_COLUMN_TYPE);
+                break;
+            case "twitter.json":
+                props = new Properties();
+                // props.setProperty(serdeConstants.SERIALIZATION_LAST_COLUMN_TAKES_REST, "true");
+                props.setProperty(serdeConstants.LIST_COLUMNS, BenchmarkConstants.TWITTER_COLUMN_NAME);
+                props.setProperty(serdeConstants.LIST_COLUMN_TYPES, BenchmarkConstants.TWITTER_COLUMN_TYPE);
                 break;
         }
-        jsonText = loadJson(resourceName);
+        jsonText = BenchmarkUtils.loadJson(resourceName);
     }
 
-    public Text loadJson(final String resourceName) throws IOException {
-        final InputStream stream = this.getClass().getResourceAsStream("/" + resourceName);
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-        final String jsonText = reader.lines().collect(Collectors.joining("\n"));
-        return new Text(jsonText);
-    }
+
 }

@@ -35,6 +35,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.JsonSerDe;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -42,31 +43,32 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Warmup(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 6, time = 10, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 3, time = 3, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 5, time = 3, timeUnit = TimeUnit.SECONDS)
 @Fork(1)
 @BenchmarkMode({Mode.AverageTime})
-@OutputTimeUnit(TimeUnit.SECONDS)
-public class SerDeBenchmark {
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+public class DeserializationBenchmark {
     @Benchmark
-    public void benchHive(SerDeState st, Blackhole bh) throws Exception {
+    public void benchmarkCDHDeserializer(DeserializerState st, Blackhole bh) throws Exception {
         JsonSerDe serde = new JsonSerDe();
-        serde.initialize(new Configuration(), st.props, null, false);
+        serde.initialize(new Configuration(), st.props, null);
         List<?> result = (List<?>) serde.deserialize(st.jsonText);
         bh.consume(result);
     }
 
     @Benchmark
-    public void benchOpenX(SerDeState st, Blackhole bh) throws Exception {
+    public void benchmarkOpenXDeserializer(DeserializerState st, Blackhole bh) throws Exception {
         org.openx.data.jsonserde.JsonSerDe serde = new org.openx.data.jsonserde.JsonSerDe();
         serde.initialize(new Configuration(), st.props);
-        bh.consume(serde.deserialize(st.jsonText));
+        Object result = serde.deserialize(st.jsonText);
+        bh.consume(result);
     }
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
-                .include(SerDeBenchmark.class.getSimpleName())
-                .forks(1)
+                .include(DeserializationBenchmark.class.getSimpleName())
                 .build();
+        new Runner(opt).run();
     }
 }
