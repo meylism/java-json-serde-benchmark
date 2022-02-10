@@ -11,24 +11,22 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openx.data.jsonserde.json.JSONObject;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 
 @State(Scope.Benchmark)
 public class SerializerState extends StateBase {
     @Param({"CDH", "OpenX"})
-    public String serde;
-    public Text jsonText;
-    ObjectInspector oi;
+    public static String serde;
+    public static Text jsonText;
 
-    public JsonSerDe CDHSerDe;
-    public List<?> CDHSerDeResult;
+    public static JsonSerDe CDHSerDe;
+    public static List<?> CDHSerDeResult;
 
     public org.openx.data.jsonserde.JsonSerDe OpenXSerDe;
     public JSONObject OpenXSerDeResult;
 
-    Properties props = new Properties();
+    static Properties props = new Properties();
     @Setup
     public void setup() throws Exception {
         jsonText = BenchmarkUtils.loadJson(resourceName);
@@ -54,5 +52,17 @@ public class SerializerState extends StateBase {
                 OpenXSerDeResult = (JSONObject) OpenXSerDe.deserialize(jsonText);
                 break;
         }
+    }
+    public static void main(String[] args) throws Exception {
+        jsonText = BenchmarkUtils.loadJson("mesh.json");
+        props.setProperty(serdeConstants.LIST_COLUMNS, BenchmarkConstants.MESH_COLUMN_NAME);
+        props.setProperty(serdeConstants.LIST_COLUMN_TYPES, BenchmarkConstants.MESH_COLUMN_TYPE);
+        CDHSerDe = new JsonSerDe();
+        CDHSerDe.initialize(new Configuration(), props, null);
+        CDHSerDeResult = (List<?>) CDHSerDe.deserialize(jsonText);
+        ObjectInspector oi;
+        oi = CDHSerDe.getObjectInspector();
+        Object result = CDHSerDe.serialize(CDHSerDeResult, oi);
+        System.out.println(result);
     }
 }
