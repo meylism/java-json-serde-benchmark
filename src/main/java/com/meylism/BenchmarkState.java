@@ -15,16 +15,18 @@ import java.util.List;
 import java.util.Properties;
 
 @State(Scope.Benchmark)
-public class SerializerState extends StateBase {
+public class BenchmarkState extends StateBase {
     @Param({"CDH", "OpenX"})
-    public static String serde;
-    public static Text jsonText;
+    public String serde;
+    public Text jsonText;
 
-    public static JsonSerDe CDHSerDe;
-    public static List<?> CDHSerDeResult;
+    public JsonSerDe CDHSerDe;
+    public Object CDHSerDeResult;
 
     public org.openx.data.jsonserde.JsonSerDe OpenXSerDe;
-    public JSONObject OpenXSerDeResult;
+    public Object OpenXSerDeResult;
+
+    public ObjectInspector oi;
 
     static Properties props = new Properties();
     @Setup
@@ -44,25 +46,15 @@ public class SerializerState extends StateBase {
             case "CDH":
                 CDHSerDe = new JsonSerDe();
                 CDHSerDe.initialize(new Configuration(), props, null);
-                CDHSerDeResult = (List<?>) CDHSerDe.deserialize(jsonText);
+                CDHSerDeResult = CDHSerDe.deserialize(jsonText);
+                oi = CDHSerDe.getObjectInspector();
                 break;
             case "OpenX":
                 OpenXSerDe = new org.openx.data.jsonserde.JsonSerDe();
                 OpenXSerDe.initialize(new Configuration(), props);
-                OpenXSerDeResult = (JSONObject) OpenXSerDe.deserialize(jsonText);
+                OpenXSerDeResult = OpenXSerDe.deserialize(jsonText);
+                oi = OpenXSerDe.getObjectInspector();
                 break;
         }
-    }
-    public static void main(String[] args) throws Exception {
-        jsonText = BenchmarkUtils.loadJson("mesh.json");
-        props.setProperty(serdeConstants.LIST_COLUMNS, BenchmarkConstants.MESH_COLUMN_NAME);
-        props.setProperty(serdeConstants.LIST_COLUMN_TYPES, BenchmarkConstants.MESH_COLUMN_TYPE);
-        CDHSerDe = new JsonSerDe();
-        CDHSerDe.initialize(new Configuration(), props, null);
-        CDHSerDeResult = (List<?>) CDHSerDe.deserialize(jsonText);
-        ObjectInspector oi;
-        oi = CDHSerDe.getObjectInspector();
-        Object result = CDHSerDe.serialize(CDHSerDeResult, oi);
-        System.out.println(result);
     }
 }

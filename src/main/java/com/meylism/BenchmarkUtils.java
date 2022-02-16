@@ -13,6 +13,6 @@ public class BenchmarkUtils {
         final InputStream stream = BenchmarkUtils.class.getClass().getResourceAsStream("/json/" + resourceName);
         final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
         final String jsonText = reader.lines().collect(Collectors.joining(""));
-        return new Text(jsonText);
+        return new Text(jsonText.replaceAll("\\s+", ""));
     }
 }
